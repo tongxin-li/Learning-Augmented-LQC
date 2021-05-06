@@ -60,27 +60,54 @@ def compute_upper_bound(A, B, Q, R, OPT, lam, epsilon, W, Z):
     return min(bound_1, bound_2)
 
 
-def generate_noise(mu, sigma, T):
+def generate_noise(mu, sigma, T, A):
 
-    noise = np.zeros((T, 4))
+    noise = np.zeros((T, np.shape(A)[0]))
 
     for t in range(T):
 
-        noise[t] = np.random.normal(mu, sigma, 4)
+        noise[t] = np.random.normal(mu, sigma, np.shape(A)[0])
 
     return noise
 
+def generate_w(mode, T, A):
 
-def run_robot(T,A,B,Q,R,lam,noise):
+    w = np.zeros((T, np.shape(A)[0]))
+
+    if mode == 'Tracking':
+
+        y = np.zeros((T, 2))
+
+        for t in range(T):
+
+            y_1,y_2 = _tracking_coordinates(t)
+            y_3,y_4 = _tracking_coordinates(t+1)
+            y[t] = [y_1,y_2]
+
+            # Ground-true predictions
+            w[t] = np.matmul(A,np.array([y_1,y_2,0,0])) - np.matmul(A,np.array([y_3,y_4,0,0]))
+
+    if mode == 'Gaussian':
+
+        mu = 0
+        sigma = 1
+
+        for t in range(T):
+
+            w[t] = np.random.normal(mu, sigma, np.shape(A)[0])
+
+    return w
+
+
+
+
+def run_robot(T,A,B,Q,R,w,noise,lam):
 
     # Initialize
 
-    u = 0
     _optimal_u = 0
-    x = np.zeros((T, 4))
-    _optimal_x = np.zeros((T, 4))
-    y = np.zeros((T, 2))
-    w = np.zeros((T, 4))
+    x = np.zeros((T, np.shape(A)[0]))
+    _optimal_x = np.zeros((T, np.shape(A)[0]))
     estimated_w = np.zeros((T, 4))
     W = 0
     Z = 0
@@ -96,20 +123,10 @@ def run_robot(T,A,B,Q,R,lam,noise):
 
     for t in range(T):
 
-        y_1,y_2 = _tracking_coordinates(t)
-        y_3,y_4 = _tracking_coordinates(t+1)
-        y[t] = [y_1,y_2]
-
-        # Ground-true predictions
-        w[t] = np.matmul(A,np.array([y_1,y_2,0,0])) - np.matmul(A,np.array([y_3,y_4,0,0]))
-        # Estimated predictions
-        estimated_w[t] = np.matmul(A, np.array([y_1,y_2,0,0])) - np.matmul(A, np.array([y_3,y_4,0,0])) + noise[t]
         # Compute norms
         for s in range(t,T):
 
-            # epsilon += np.power(np.linalg.norm(F,2),s-t) * np.linalg.norm(P,2) * np.linalg.norm(noise)
-            # W += np.power(np.linalg.norm(F,2),s-t) * np.linalg.norm(P,2) * np.linalg.norm(estimated_w[t])
-
+            estimated_w[t] = w[t] + noise[t]
             epsilon += np.linalg.norm(matrix_power(F,s-t),2) * np.linalg.norm(P,2) * np.linalg.norm(noise)
             W += np.linalg.norm(matrix_power(F,s-t),2) * np.linalg.norm(P,2) * np.linalg.norm(estimated_w[t])
             Z += np.linalg.norm(matrix_power(F,s-t),2) * np.linalg.norm(P,2) * np.linalg.norm(w[t])
@@ -149,4 +166,4 @@ def run_robot(T,A,B,Q,R,lam,noise):
     print(ALG)
     print("Optimal Cost is")
     print(OPT)
-    return x, y, epsilon, W, Z, ALG, OPT
+    return epsilon, W, Z, ALG, OPT

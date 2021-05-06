@@ -14,12 +14,13 @@ for i in range(N):
 
     for j in range(M):
 
-        _noise = generate_noise(mu, sigma[i], T)
+        noise = generate_noise(mu, sigma[i], T, A)
 
         for k in range(J):
 
             print('Runing tests ... ' + 'Epsilon:' + str(i) + ' Monte:'+ str(j) + ' Lambda:' + str(k))
-            _x, _y, _epsilon, _W, _Z, _ALG, _OPT = run_robot(T, A, B, Q, R, lam[k], _noise)
+            w = generate_w(mode, T, A)
+            _epsilon, _W, _Z, _ALG, _OPT = run_robot(T, A, B, Q, R, w, noise, lam[k],)
 
             if _OPT != 0 and _ALG/_OPT > competitive_ratio[k,i]:
 
