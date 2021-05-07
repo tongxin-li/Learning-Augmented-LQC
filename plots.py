@@ -6,10 +6,9 @@ def plot_trajectory(y):
     plt.plot(y[:,0], y[:,1], linewidth=2)
 
 
-def plot_track(x, y, epsilon, color):
+def plot_track(x, y):
 
-    plt.plot(x[:,0]+y[:,0], x[:,1]+y[:,1], color=color, linewidth=1, label = "epsilon="+str(epsilon))
-    plt.legend(scatterpoints=1, frameon=True, title='Error Threshold')
+    plt.plot(x[:,0]+y[:,0], x[:,1]+y[:,1])
 
 def plot_competitive_ratio(epsilon, competitive_ratio, lam, color):
 

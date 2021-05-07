@@ -2,10 +2,12 @@ import numpy as np
 import math
 import control
 from numpy.linalg import matrix_power
+import matplotlib.pyplot as plt
+from plots import *
 
 # Define trackings
 
-def _tracking_coordinates(t):
+def tracking_coordinates(t):
 
     y_1 = 16 * np.power(math.sin(t / 4),3)
     y_2 = 13 * math.cos(t / 4) - 5 * math.cos(2 * t / 4) - 2 * math.cos(3 * t / 4) - math.cos(t)
@@ -14,9 +16,9 @@ def _tracking_coordinates(t):
 
 # Matrix calculations
 
-def _get_D(B,P):
+def _get_D(B,P,R):
 
-    D = np.matmul(np.linalg.inv(np.matmul(np.matmul(np.transpose(B),P),B)),np.transpose(B))
+    D = np.matmul(np.linalg.inv(R+np.matmul(np.matmul(np.transpose(B),P),B)),np.transpose(B))
 
     return D
 
@@ -41,24 +43,23 @@ def _get_K(F,P,H):
 def compute_upper_bound(A, B, Q, R, OPT, lam, epsilon, W, Z):
 
     P, _, _ = control.dare(A, B, Q, R)
-    D = _get_D(B, P)
+    D = _get_D(B, P, R)
     H = _get_H(B, D)
     F = _get_F(A, P, H)
 
     # K = _get_K(F,P,H)
     # w, _ = np.linalg.eig(K)
     # lam_min = min(w)
-
+    #
     # if lam_min > 0:
+    #
+    #     bound_1 = 1 + np.linalg.norm(H,2) * (lam*epsilon/OPT + (1-lam)/lam_min)
+    #     bound_2 = 1 + np.linalg.norm(H,2) * (1/lam_min + lam*W/OPT)
 
-        # bound_1 = 1 + np.linalg.norm(H,2) * (lam*epsilon/OPT + (1-lam)/lam_min)
-        # bound_2 = 1 + np.linalg.norm(H,2) * (1/lam_min + lam*W/OPT)
-
-    bound_1 = 1 + np.linalg.norm(H,2) * (lam*epsilon/OPT + (1-lam)/(OPT/Z))
-    bound_2 = 1 + np.linalg.norm(H,2) * (1/(OPT/Z) + lam*W/(OPT))
+    bound_1 = 1 + np.linalg.norm(H,2) * (lam*epsilon/OPT + Z*(1-lam)/OPT)
+    bound_2 = 1 + np.linalg.norm(H,2) * (Z/OPT + lam*W/(OPT))
 
     return min(bound_1, bound_2)
-
 
 def generate_noise(mu, sigma, T, A):
 
@@ -67,6 +68,7 @@ def generate_noise(mu, sigma, T, A):
     for t in range(T):
 
         noise[t] = np.random.normal(mu, sigma, np.shape(A)[0])
+        noise[t] = np.random.binomial(5, sigma, np.shape(A)[0])
 
     return noise
 
@@ -80,8 +82,8 @@ def generate_w(mode, T, A):
 
         for t in range(T):
 
-            y_1,y_2 = _tracking_coordinates(t)
-            y_3,y_4 = _tracking_coordinates(t+1)
+            y_1,y_2 = tracking_coordinates(t)
+            y_3,y_4 = tracking_coordinates(t+1)
             y[t] = [y_1,y_2]
 
             # Ground-true predictions
@@ -98,9 +100,6 @@ def generate_w(mode, T, A):
 
     return w
 
-
-
-
 def run_robot(T,A,B,Q,R,w,noise,lam):
 
     # Initialize
@@ -114,7 +113,7 @@ def run_robot(T,A,B,Q,R,w,noise,lam):
     epsilon = 0
 
     P, _, _ = control.dare(A, B, Q, R)
-    D = _get_D(B, P)
+    D = _get_D(B, P, R)
     H = _get_H(B, D)
     F = _get_F(A, P, H)
 
@@ -156,11 +155,23 @@ def run_robot(T,A,B,Q,R,w,noise,lam):
         # Update costs
 
         if t < T-1:
-            ALG += (x[t][0] ** 2) + (x[t][1] ** 2)
-            OPT += (_optimal_x[t][0] ** 2) + (_optimal_x[t][1] ** 2)
+
+            ALG += (x[t][0] ** 2) + (x[t][1] ** 2) + 0.01*(u[0] ** 2) + 0.01*(u[1] ** 2)
+            OPT += (_optimal_x[t][0] ** 2) + 0.01*(_optimal_x[t][1] ** 2) + 0.01*(_optimal_u[0] ** 2) + (_optimal_u[1] ** 2)
         else:
             ALG += np.matmul(np.transpose(x[t]),np.matmul(P,x[t]))
             OPT += np.matmul(np.transpose(_optimal_x[t]),np.matmul(P,_optimal_x[t]))
+
+    # y = np.zeros((T, 2))
+    #
+    # for t in range(T):
+    #     y_1, y_2 = tracking_coordinates(t)
+    #     y_3, y_4 = tracking_coordinates(t + 1)
+    #     y[t] = [y_1, y_2]
+    # plot_track(x,y)
+    # plot_trajectory(y)
+    # plt.grid()
+    # plt.show()
 
     print("Algorithm Cost is")
     print(ALG)

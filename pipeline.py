@@ -9,7 +9,6 @@ competitive_ratio = np.zeros((J,N))
 upper_bound = np.zeros((J,N))
 epsilon = np.zeros((J,N))
 
-
 for i in range(N):
 
     for j in range(M):
