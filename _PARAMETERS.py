@@ -11,9 +11,9 @@ def generate_parameters(mode):
         Q = np.array([[0.01,0,0,0],[0,0.01,0,0],[0,0,0,0],[0,0,0,0]])
         R = np.array([[0.01,0],[0,0.01]])
 
-        T = 30 # Time steps
+        T = 150 # Time steps
         N = 50 # Epsilon divisions
-        M = 2 # Number of Monte Carlo tests
+        M = 1 # Number of Monte Carlo tests
         J = 6
 
         sigma = np.logspace(0,1,N)-1

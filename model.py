@@ -2,8 +2,6 @@ import numpy as np
 import math
 import control
 from numpy.linalg import matrix_power
-import matplotlib.pyplot as plt
-from plots import *
 
 # Define trackings
 
@@ -100,13 +98,38 @@ def generate_w(mode, A, T):
 
     return w
 
+# A function for determining lambda
+def _find_lam(t, w, estimated_w, P, F, H):
+
+    prediction_perturbation = 0
+    prediction_prediction = 0
+
+    for s in range(t):
+        left_1 = 0
+        left_2 = 0
+        right = 0
+        for l in range(s,t):
+            left_1 += np.matmul(np.matmul(np.transpose(estimated_w[l]),np.transpose(P)),np.linalg.matrix_power(F,l-s))
+            left_2 += np.matmul(np.matmul(np.transpose(w[l]),np.transpose(P)),np.linalg.matrix_power(F,l-s))
+            right += np.transpose(np.matmul(np.matmul(np.transpose(estimated_w[l]),np.transpose(P)),np.linalg.matrix_power(F,l-s)))
+        prediction_prediction += np.matmul(left_1,np.matmul(H,right))
+        prediction_perturbation += np.matmul(left_2,np.matmul(H,right))
+
+    if prediction_prediction != 0:
+        lam_optimal = prediction_perturbation/prediction_prediction
+    else:
+        lam_optimal = 0.8
+
+    return lam_optimal
+
+
 def run_robot(T,A,B,Q,R,noise,lam,mode):
 
     # Initialize
 
-    _optimal_u = 0
-    x = np.zeros((T, np.shape(A)[0]))
+    _myopic_x = np.zeros((T, np.shape(A)[0]))
     _optimal_x = np.zeros((T, np.shape(A)[0]))
+    _online_x = np.zeros((T, np.shape(A)[0]))
     w = np.zeros((T, np.shape(A)[0]))
     estimated_w = np.zeros((T, np.shape(A)[0]))
     W = 0
@@ -120,7 +143,8 @@ def run_robot(T,A,B,Q,R,noise,lam,mode):
     H = _get_H(B, D)
     F = _get_F(A, P, H)
 
-    ALG = 0
+    myopic_ALG = 0
+    online_ALG = 0
     OPT = 0
 
     for t in range(T):
@@ -146,35 +170,47 @@ def run_robot(T,A,B,Q,R,noise,lam,mode):
 
         # Update actions
 
-        E = np.matmul(P,np.matmul(A,x[t]))
-        G = 0
+        _myopic_E = np.matmul(P,np.matmul(A,_myopic_x[t]))
+        _online_E = np.matmul(P, np.matmul(A, _online_x[t]))
         _optimal_E = np.matmul(P,np.matmul(A,_optimal_x[t]))
+        _myopic_G = 0
         _optimal_G = 0
 
         for s in range(t,T):
-            G += np.matmul(np.linalg.matrix_power(np.transpose(F),s-t), np.matmul(P,estimated_w[s]))
+            _myopic_G += np.matmul(np.linalg.matrix_power(np.transpose(F),s-t), np.matmul(P,estimated_w[s]))
             _optimal_G += np.matmul(np.linalg.matrix_power(np.transpose(F),s-t), np.matmul(P,w[s]))
 
-        u = -np.matmul(D,E) - lam * np.matmul(D,G)
+        # Myopic algorithm
+
+        _myopic_u = -np.matmul(D,_myopic_E) - lam * np.matmul(D,_myopic_G)
+
+        # Online algorithm (time-varying lambda)
+        _FTL_lam = _find_lam(t, w, estimated_w, P, F, H)
+        _online_u = -np.matmul(D, _online_E) - _FTL_lam * np.matmul(D, _myopic_G)
+
+        # Omniscient algorithm
         _optimal_u = -np.matmul(D,_optimal_E) - np.matmul(D,_optimal_G)
 
         # Update states
 
         if t < T-1:
-            x[t+1] = np.matmul(A, x[t]) + np.matmul(B,u) + w[t]
-            _optimal_x[t + 1] = np.matmul(A, _optimal_x[t]) + np.matmul(B, _optimal_u) + w[t]
+            _myopic_x[t+1] = np.matmul(A, _myopic_x[t]) + np.matmul(B,_myopic_u) + w[t]
+            _online_x[t+1] = np.matmul(A, _online_x[t]) + np.matmul(B, _online_u) + w[t]
+            _optimal_x[t+1] = np.matmul(A, _optimal_x[t]) + np.matmul(B, _optimal_u) + w[t]
 
         # Update costs
 
         if t < T-1:
 
-            ALG += np.matmul(np.transpose(x[t]),np.matmul(Q,x[t])) + np.matmul(np.transpose(u),np.matmul(R,u))
+            myopic_ALG += np.matmul(np.transpose(_myopic_x[t]),np.matmul(Q,_myopic_x[t])) + np.matmul(np.transpose(_myopic_u),np.matmul(R,_myopic_u))
+            online_ALG += np.matmul(np.transpose(_online_x[t]),np.matmul(Q,_online_x[t])) + np.matmul(np.transpose(_online_u),np.matmul(R,_online_u))
             OPT += np.matmul(np.transpose(_optimal_x[t]),np.matmul(Q,_optimal_x[t])) + np.matmul(np.transpose(_optimal_u),np.matmul(R,_optimal_u))
 
-            # ALG += (x[t][0] ** 2) + (x[t][1] ** 2) + 0.01*(u[0] ** 2) + 0.01*(u[1] ** 2)
+            # myopic_ALG += (x[t][0] ** 2) + (x[t][1] ** 2) + 0.01*(u[0] ** 2) + 0.01*(u[1] ** 2)
             # OPT += (_optimal_x[t][0] ** 2) + (_optimal_x[t][1] ** 2) + 0.01*(_optimal_u[0] ** 2) +  0.01* (_optimal_u[1] ** 2)
         else:
-            ALG += np.matmul(np.transpose(x[t]),np.matmul(P,x[t]))
+            online_ALG += np.matmul(np.transpose(_online_x[t]), np.matmul(P,_online_x[t]))
+            myopic_ALG += np.matmul(np.transpose(_myopic_x[t]),np.matmul(P,_myopic_x[t]))
             OPT += np.matmul(np.transpose(_optimal_x[t]),np.matmul(P,_optimal_x[t]))
 
     # y = np.zeros((T, 2))
@@ -188,8 +224,10 @@ def run_robot(T,A,B,Q,R,noise,lam,mode):
     # plt.grid()
     # plt.show()
 
-    print("Algorithm Cost is")
-    print(ALG)
+    print("Online Cost is")
+    print(online_ALG)
+    print("Myopic Cost is")
+    print(myopic_ALG)
     print("Optimal Cost is")
     print(OPT)
-    return epsilon, X, Y, W, Z, ALG, OPT
+    return epsilon, X, Y, W, Z, myopic_ALG, online_ALG, OPT
