@@ -99,7 +99,7 @@ def generate_w(mode, A, T):
                 if t % 5:
                         # arrival every 5 steps
                         # w[t][i] = random.choice(energy)
-                        w[t][i] = 5
+                        w[t][i] = 12.117245614035088
                 else:
                     w[t][i] = 0
 

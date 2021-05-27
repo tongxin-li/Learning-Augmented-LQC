@@ -30,12 +30,12 @@ def generate_parameters(mode):
         Q = np.eye(10)
         R = 0.1*np.eye(10)
 
-        T = 30 # Time steps
-        N = 10 # Epsilon divisions
+        T = 100 # Time steps
+        N = 20 # Epsilon divisions
         M = 5 # Number of Monte Carlo tests
         J = 6
 
-        sigma = np.linspace(0,3,N)
+        sigma = np.linspace(0,10,N)
         lam = np.linspace(0,1,J)
         mu = 0
 
