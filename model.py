@@ -1,14 +1,16 @@
 import numpy as np
+import random
 import math
 import control
 from numpy.linalg import matrix_power
+from plots import *
 
 # Define trackings
 
 def tracking_coordinates(t):
 
-    y_1 = 16 * np.power(math.sin(t / 4),3)
-    y_2 = 13 * math.cos(t / 4) - 5 * math.cos(2 * t / 4) - 2 * math.cos(3 * t / 4) - math.cos(t)
+    y_1 = 2 * math.cos(math.pi * t/30) + math.cos(math.pi *  t/6)
+    y_2 = 2 * math.sin(math.pi * t/30) + math.sin(math.pi *  t/6)
 
     return y_1, y_2
 
@@ -68,7 +70,7 @@ def generate_noise(mu, sigma, T, A):
     for t in range(T):
 
         noise[t] = np.random.normal(mu, sigma, np.shape(A)[0])
-        noise[t] = 0.2 * np.random.binomial(10, sigma, np.shape(A)[0])
+        # noise[t] = 0.05 * np.random.binomial(10, sigma, np.shape(A)[0])
 
     return noise
 
@@ -87,12 +89,15 @@ def generate_w(mode, A, T):
 
     if mode == 'EV':
 
+        energy = np.load('data/energy.npy')
+
         for t in range(T):
-            p = 0.1
+            p = 0.2
             for i in range(np.shape(A)[0]):
                 coin = np.random.binomial(1, p, 1) # arriving rate 0.1
                 if coin > 0:
-                    w[i] = np.random.normal(10, 1, 1)
+                        # arrival
+                        w[i] = random.choice(energy)
                 else:
                     w[i] = 0
 
@@ -118,7 +123,10 @@ def _find_lam(t, w, estimated_w, P, F, H):
     if prediction_prediction != 0:
         lam_optimal = prediction_perturbation/prediction_prediction
     else:
-        lam_optimal = 0.8
+        lam_optimal = 0.1
+
+    if lam_optimal < 0:
+        lam_optimal = 0
 
     return lam_optimal
 
@@ -127,6 +135,7 @@ def run_robot(T,A,B,Q,R,noise,lam,mode):
 
     # Initialize
 
+    _lambda = np.zeros(T)
     _myopic_x = np.zeros((T, np.shape(A)[0]))
     _optimal_x = np.zeros((T, np.shape(A)[0]))
     _online_x = np.zeros((T, np.shape(A)[0]))
@@ -160,11 +169,13 @@ def run_robot(T,A,B,Q,R,noise,lam,mode):
             inner_epsilon += np.linalg.norm(matrix_power(F,s-t),2) * np.linalg.norm(P,2) * np.linalg.norm(noise[s])
             inner_W += np.linalg.norm(matrix_power(F,s-t),2) * np.linalg.norm(P,2) * np.linalg.norm(estimated_w[s])
             inner_Z += np.linalg.norm(matrix_power(F,s-t),2) * np.linalg.norm(P,2) * np.linalg.norm(w[s])
-        epsilon += inner_epsilon ** 2
+        epsilon += inner_epsilon ** 4
         W += inner_W ** 2
         Z += inner_Z ** 2
         Y += inner_epsilon * inner_Z
         X += inner_Z * inner_W
+
+    epsilon = math.sqrt(epsilon)
 
     for t in range(T):
 
@@ -186,6 +197,9 @@ def run_robot(T,A,B,Q,R,noise,lam,mode):
 
         # Online algorithm (time-varying lambda)
         _FTL_lam = _find_lam(t, w, estimated_w, P, F, H)
+        if _FTL_lam>1:
+            _FTL_lam = 1
+        _lambda[t] = _FTL_lam
         _online_u = -np.matmul(D, _online_E) - _FTL_lam * np.matmul(D, _myopic_G)
 
         # Omniscient algorithm
@@ -218,10 +232,19 @@ def run_robot(T,A,B,Q,R,noise,lam,mode):
     # for t in range(T):
     #     y_1, y_2 = tracking_coordinates(t)
     #     y[t] = [y_1, y_2]
-    # plot_track(x,y)
-    # plot_track(_optimal_x,y)
-    # plot_trajectory(y)
+    #
+    # # plot_track(_myopic_x,y,r'$\lambda$=1','red')
+    # plot_track(_online_x[:61],y[:61],r'$t\in [0,60]$','blue')
+    # plot_track(_online_x[61:92],y[61:92],r'$t\in (60,90]$','green')
+    # plot_track(_online_x[92:153],y[92:153],r'$t\in [90,150]$','magenta')
+    # plot_track(_online_x[153:214],y[153:214],r'$t\in [150,210]$','gray')
+    # # plot_track(_optimal_x,y,'Offline-Optimal','green')
+    # plot_trajectory(y[150:210],'black')
     # plt.grid()
+    # plt.show()
+
+    # plt.figure()
+    # plot_lambda(_lambda)
     # plt.show()
 
     print("Online Cost is")

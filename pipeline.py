@@ -30,7 +30,7 @@ for i in range(N):
 
                 competitive_ratio[k,i] = _myopic_ALG/_OPT
                 epsilon[k,i] = _epsilon
-                upper_bound[k,i] = compute_upper_bound(A, B, Q, R, _OPT, lam[k], _epsilon,  X, Y, W, Z)
+                # upper_bound[k,i] = compute_upper_bound(A, B, Q, R, _OPT, lam[k], _epsilon,  X, Y, W, Z)
 
             if _OPT != 0 and _online_ALG / _OPT > online_competitive_ratio[i]:
 
@@ -50,7 +50,7 @@ for k in range(J):
     # plot_upper_bound(np.array(epsilon[k]), upper_bound[k], lam[k], colors[bound_color_index])
     bound_color_index += 1
 
-plot_competitive_ratio(np.array(online_epsilon), np.array(online_competitive_ratio), 0, 'black', True)
+# plot_competitive_ratio(np.array(online_epsilon), np.array(online_competitive_ratio), 0, 'black', True)
 
 plt.title("Algorithm Performance")
 plt.xlabel('Prediction Error '+r"$\varepsilon$")

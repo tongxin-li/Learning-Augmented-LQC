@@ -1,14 +1,32 @@
 import matplotlib.pyplot as plt
+import matplotlib
+from matplotlib import rc
+import numpy as np
+
+def plot_lambda(lam):
 
 
-def plot_trajectory(y):
+    opt_lam = lam[-1] * np.ones(len(lam))
+    rc('font',**{'family':'sans-serif','sans-serif':['Helvetica']})
+    rc('text', usetex=True)
+    plt.plot(lam, color='black', label='Self-tuned parameters')
+    plt.plot(opt_lam, color='gray', linestyle='dashed', label='Optimal tuning parameter')
+    plt.legend(loc='best', scatterpoints=1, frameon=True, labelspacing=0.2, prop={'size': 15})
 
-    plt.plot(y[:,0], y[:,1], linewidth=2)
 
+def plot_trajectory(y,color):
 
-def plot_track(x, y):
+    rc('font',**{'family':'sans-serif','sans-serif':['Helvetica']})
+    rc('text', usetex=True)
+    plt.plot(y[:,0], y[:,1], linewidth=0.5, color=color, linestyle='dashed', label='Trajectory'+r' $\mathbf{y}$')
+    plt.legend(loc='upper right', scatterpoints=1, frameon=True, labelspacing=0.2, title='Trajectories')
 
-    plt.plot(x[:,0]+y[:,0], x[:,1]+y[:,1])
+def plot_track(x, y,context, color):
+
+    rc('font',**{'family':'sans-serif','sans-serif':['Helvetica']})
+    rc('text', usetex=True)
+    plt.plot(x[:,0]+y[:,0], x[:,1]+y[:,1], color=color, label=context)
+    plt.legend(loc='upper right', scatterpoints=1, frameon=True, labelspacing=0.2, title='Trajectories')
 
 def plot_competitive_ratio(epsilon, competitive_ratio, lam, color, online):
 
