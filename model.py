@@ -232,7 +232,7 @@ def run_robot(T,A,B,Q,R,noise,lam,mode):
     # for t in range(T):
     #     y_1, y_2 = tracking_coordinates(t)
     #     y[t] = [y_1, y_2]
-    #
+
     # # plot_track(_myopic_x,y,r'$\lambda$=1','red')
     # plot_track(_online_x[:61],y[:61],r'$t\in [0,60]$','blue')
     # plot_track(_online_x[61:92],y[61:92],r'$t\in (60,90]$','green')

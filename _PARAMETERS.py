@@ -12,9 +12,9 @@ def generate_parameters(mode):
         R = np.array([[0.00001,0],[0,0.00001]])
 
         T = 20 # Time steps
-        N = 20 # Epsilon divisions
-        M = 2 # Number of Monte Carlo tests
-        J = 6
+        N = 10 # Epsilon divisions
+        M = 1 # Number of Monte Carlo tests
+        J = 3
 
         sigma = np.linspace(0.5,1,N)
         lam = np.linspace(0,1,J)

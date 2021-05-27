@@ -5,7 +5,7 @@ from _PARAMETERS import *
 
 # Initialize
 
-mode = 'Tracking'
+mode = 'EV'
 
 A, B, Q, R, T, N, M, J, sigma, lam, mu = generate_parameters(mode)
 
