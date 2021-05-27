@@ -69,8 +69,8 @@ def generate_noise(mu, sigma, T, A):
     noise = np.zeros((T, np.shape(A)[0]))
 
     for t in range(T):
-        # noise[t] = np.random.normal(mu, sigma, np.shape(A)[0])
-        noise[t] = sigma * np.random.binomial(10, 0.5, np.shape(A)[0])
+        noise[t] = np.random.normal(mu, sigma, np.shape(A)[0])
+        # noise[t] = sigma * np.random.binomial(10, 0.5, np.shape(A)[0])
 
     return noise
 
