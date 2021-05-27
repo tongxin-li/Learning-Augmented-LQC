@@ -1,6 +1,7 @@
 import numpy as np
 import math
 import control
+import random
 
 # Define trackings
 
@@ -88,14 +89,18 @@ def generate_w(mode, A, T):
 
     if mode == 'EV':
 
+        energy = np.load('data/energy.npy')
+
         for t in range(T):
-            p = 0.1
+            # p = 0.5
             for i in range(np.shape(A)[0]):
-                coin = np.random.binomial(1, p, 1)  # arriving rate 0.1
-                if coin > 0:
-                    w[i] = np.random.normal(10, 1, 1)
+                # coin = np.random.binomial(1, p, 1) # arriving rate 0.1
+                # if coin > 0:
+                if t % 5:
+                        # arrival every 5 steps
+                        w[t][i] = random.choice(energy)
                 else:
-                    w[i] = 0
+                    w[t][i] = 0
 
     return w
 
