@@ -35,7 +35,7 @@ def generate_parameters(mode):
         M = 5 # Number of Monte Carlo tests
         J = 6
 
-        sigma = np.linspace(0,1,N)
+        sigma = np.linspace(0.5,3,N)
         lam = np.linspace(0,1,J)
         mu = 0
 

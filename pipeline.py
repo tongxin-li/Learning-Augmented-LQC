@@ -52,9 +52,8 @@ bound_color_index = 0
 for k in range(J):
     _, upper_bound[k] = (list(t) for t in zip(*sorted(zip(epsilon[k], upper_bound[k]))))
     epsilon[k], competitive_ratio[k] = (list(t) for t in zip(*sorted(zip(epsilon[k], competitive_ratio[k]))))
-    # plot_competitive_ratio(np.array(epsilon[k]), np.array(competitive_ratio[k]), lam[k], colors[bound_color_index],
-    #                        False)
-    plot_upper_bound(np.array(epsilon[k]), upper_bound[k], lam[k], colors[bound_color_index])
+    plot_competitive_ratio(np.array(epsilon[k]), np.array(competitive_ratio[k]), lam[k], colors[bound_color_index],False)
+    # plot_upper_bound(np.array(epsilon[k]), upper_bound[k], lam[k], colors[bound_color_index])
     bound_color_index += 1
 
 # online_epsilon, online_competitve_ratio = (list(t) for t in zip(*sorted(zip(online_epsilon, online_competitive_ratio))))
@@ -62,8 +61,8 @@ for k in range(J):
 
 plt.title("Algorithm Performance")
 plt.xlabel('Prediction Error ' + r"$\varepsilon$")
-# plt.ylabel("Competitive Ratios")
-plt.ylabel("Upper Bounds")
+plt.ylabel("Competitive Ratios")
+# plt.ylabel("Upper Bounds")
 plt.grid()
 plt.show()
 

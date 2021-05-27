@@ -69,8 +69,8 @@ def generate_noise(mu, sigma, T, A):
     noise = np.zeros((T, np.shape(A)[0]))
 
     for t in range(T):
-        noise[t] = np.random.normal(mu, sigma, np.shape(A)[0])
-        noise[t] = 0.2 * np.random.binomial(10, sigma, np.shape(A)[0])
+        # noise[t] = np.random.normal(mu, sigma, np.shape(A)[0])
+        noise[t] = sigma * np.random.binomial(10, 0.5, np.shape(A)[0])
 
     return noise
 
@@ -98,7 +98,8 @@ def generate_w(mode, A, T):
                 # if coin > 0:
                 if t % 5:
                         # arrival every 5 steps
-                        w[t][i] = random.choice(energy)
+                        # w[t][i] = random.choice(energy)
+                        w[t][i] = 5
                 else:
                     w[t][i] = 0
 
