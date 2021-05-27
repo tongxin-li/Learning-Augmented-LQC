@@ -70,7 +70,7 @@ def generate_noise(mu, sigma, T, A):
     for t in range(T):
 
         # noise[t] = np.random.normal(mu, sigma, np.shape(A)[0])
-        noise[t] = 0.05 * np.random.binomial(10, sigma, np.shape(A)[0])
+        noise[t] = 1 * np.random.binomial(10, sigma, np.shape(A)[0])
 
     return noise
 
@@ -92,14 +92,15 @@ def generate_w(mode, A, T):
         energy = np.load('data/energy.npy')
 
         for t in range(T):
-            p = 0.2
+            # p = 0.5
             for i in range(np.shape(A)[0]):
-                coin = np.random.binomial(1, p, 1) # arriving rate 0.1
-                if coin > 0:
+                # coin = np.random.binomial(1, p, 1) # arriving rate 0.1
+                # if coin > 0:
+                if t % 5:
                         # arrival
-                        w[i] = random.choice(energy)
+                        w[t][i] = random.choice(energy)
                 else:
-                    w[i] = 0
+                    w[t][i] = 0
 
     return w
 
