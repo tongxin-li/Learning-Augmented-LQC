@@ -236,8 +236,6 @@ def run_robot(T, A, B, Q, R, noise, lam, mode):
             OPT += np.matmul(np.transpose(_optimal_x[t]), np.matmul(Q, _optimal_x[t])) + np.matmul(
                 np.transpose(_optimal_u), np.matmul(R, _optimal_u))
 
-            # myopic_ALG += (x[t][0] ** 2) + (x[t][1] ** 2) + 0.01*(u[0] ** 2) + 0.01*(u[1] ** 2)
-            # OPT += (_optimal_x[t][0] ** 2) + (_optimal_x[t][1] ** 2) + 0.01*(_optimal_u[0] ** 2) +  0.01* (_optimal_u[1] ** 2)
         else:
             online_ALG += np.matmul(np.transpose(_online_x[t]), np.matmul(P, _online_x[t]))
             myopic_ALG += np.matmul(np.transpose(_myopic_x[t]), np.matmul(P, _myopic_x[t]))
