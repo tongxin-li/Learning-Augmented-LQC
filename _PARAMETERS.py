@@ -12,7 +12,7 @@ def generate_parameters(mode):
 
         T = 200  # Time steps
         N = 30  # Epsilon divisions
-        M = 1  # Number of Monte Carlo tests
+        M = 5  # Number of Monte Carlo tests
         J = 6
 
         sigma = np.logspace(0, 1, N) - 1

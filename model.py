@@ -99,7 +99,7 @@ def generate_w(mode, A, T):
                 if t % 5:
                         # arrival every 5 steps
                         # w[t][i] = random.choice(energy)
-                        w[t][i] = 12.117245614035088
+                        w[t][i] = np.mean(energy)
                 else:
                     w[t][i] = 0
 
@@ -243,16 +243,6 @@ def run_robot(T, A, B, Q, R, noise, lam, mode):
             myopic_ALG += np.matmul(np.transpose(_myopic_x[t]), np.matmul(P, _myopic_x[t]))
             OPT += np.matmul(np.transpose(_optimal_x[t]), np.matmul(P, _optimal_x[t]))
 
-    # y = np.zeros((T, 2))
-    #
-    # for t in range(T):
-    #     y_1, y_2 = tracking_coordinates(t)
-    #     y[t] = [y_1, y_2]
-    # plot_track(x,y)
-    # plot_track(_optimal_x,y)
-    # plot_trajectory(y)
-    # plt.grid()
-    # plt.show()
 
     print("Online Cost is")
     print(online_ALG)
