@@ -6,8 +6,6 @@ import random
 # Define trackings
 
 def tracking_coordinates(t):
-    # y_1 = 16 * np.power(math.sin(t / 4), 3)
-    # y_2 = 13 * math.cos(t / 4) - 5 * math.cos(2 * t / 4) - 2 * math.cos(3 * t / 4) - math.cos(t)
 
     y_1 = 2 * math.cos(t) + math.cos(5 * t)
     y_2 = 2 * math.sin(t) + math.sin(5 * t)
@@ -42,21 +40,13 @@ def _get_K(F, P, H):
 
 
 def compute_upper_bound(A, B, Q, R, OPT, lam, epsilon, X, Y, W, Z):
-    bound_1 = 0
-    bound_2 = 0
+
     P, _, _ = control.dare(A, B, Q, R)
     D = _get_D(B, P, R)
     H = _get_H(B, D)
-    #
-    # F = _get_F(A, P, H)
-    # K = _get_K(F,P,H)
-    # w, _ = np.linalg.eig(K)
-    # lam_min = min(w)
-    #
-    # if lam_min > 0:
-    #
-    #     bound_1 = 1 + np.linalg.norm(H,2) * (lam*epsilon/OPT + (1-lam)/lam_min)
-    #     bound_2 = 1 + np.linalg.norm(H,2) * (1/lam_min + lam*W/OPT)
+    F = _get_F(A, P, H)
+    K = _get_K(F,P,H)
+    w, _ = np.linalg.eig(K)
 
     bound_1 = 1 + np.linalg.norm(H, 2) * (
             (lam ** 2) * (epsilon) / OPT + Z * ((1 - lam) ** 2) / OPT + Y * (1 - lam) * lam / OPT)
@@ -69,6 +59,7 @@ def generate_noise(mu, sigma, T, A):
     noise = np.zeros((T, np.shape(A)[0]))
 
     for t in range(T):
+
         noise[t] = np.random.normal(mu, sigma, np.shape(A)[0])
         # noise[t] = sigma * np.random.binomial(10, 0.5, np.shape(A)[0])
 
@@ -76,6 +67,7 @@ def generate_noise(mu, sigma, T, A):
 
 
 def generate_w(mode, A, T):
+
     w = np.zeros((T, np.shape(A)[0]))
 
     if mode == 'Tracking':
@@ -106,8 +98,10 @@ def generate_w(mode, A, T):
     return w
 
 
-# A function for determining lambda
+# Determining lambda
+
 def _find_lam(t, w, estimated_w, P, F, H):
+
     prediction_perturbation = 0
     prediction_prediction = 0
 
@@ -125,12 +119,13 @@ def _find_lam(t, w, estimated_w, P, F, H):
     if prediction_prediction != 0:
         lam_optimal = prediction_perturbation / prediction_prediction
     else:
-        lam_optimal = 0.8
+        lam_optimal = 0.3
 
     return lam_optimal
 
 
 def _find_all_lam(T, w, estimated_w, P, F, H, size):
+
     all_lam_optimal = []
     matrix_w = np.zeros((T, T, size))
     matrix_est_w = np.zeros((T, T, size))
@@ -152,6 +147,7 @@ def _find_all_lam(T, w, estimated_w, P, F, H, size):
 
 
 def run_robot(T, A, B, Q, R, noise, lam, mode):
+
     # Initialize
 
     _myopic_x = np.zeros((T, np.shape(A)[0]))
@@ -177,9 +173,12 @@ def run_robot(T, A, B, Q, R, noise, lam, mode):
     for t in range(T):
 
         # Generate perturbations
+
         w = generate_w(mode, A, T)
         estimated_w = w + noise
+
         # Compute norms
+
         inner_epsilon = 0
         inner_W = 0
         inner_Z = 0
@@ -212,10 +211,12 @@ def run_robot(T, A, B, Q, R, noise, lam, mode):
         _myopic_u = -np.matmul(D, _myopic_E) - lam * np.matmul(D, _myopic_G)
 
         # Online algorithm (time-varying lambda)
+
         _FTL_lam = _find_lam(t, w, estimated_w, P, F, H)
         _online_u = -np.matmul(D, _online_E) - _FTL_lam * np.matmul(D, _myopic_G)
 
         # Omniscient algorithm
+
         _optimal_u = -np.matmul(D, _optimal_E) - np.matmul(D, _optimal_G)
 
         # Update states
@@ -252,13 +253,16 @@ def run_robot(T, A, B, Q, R, noise, lam, mode):
 
 
 def run_lqr_robot(T, A, B, Q, R, noise, lam, mode, P, D, H, F):
+
     # Initialize
 
     _myopic_x = np.zeros((T, np.shape(A)[0]))
     w = np.zeros((T, np.shape(A)[0]))
     estimated_w = np.zeros((T, np.shape(A)[0]))
     for t in range(T):
+
         # Generate perturbations
+
         w = generate_w(mode, A, T)
         estimated_w = w + noise
 
@@ -298,6 +302,7 @@ def run_lqr_robot(T, A, B, Q, R, noise, lam, mode, P, D, H, F):
 
 
 def run_fix_lqr_robot(T, A, B, Q, R, noise, mode, P, D, H, F):
+
     # Initialize
 
     _myopic_x = np.zeros((T, np.shape(A)[0]))
@@ -317,9 +322,12 @@ def run_fix_lqr_robot(T, A, B, Q, R, noise, mode, P, D, H, F):
     for t in range(T):
 
         # Generate perturbations
+
         w = generate_w(mode, A, T)
         estimated_w = w + noise
+
         # Compute norms
+
         inner_epsilon = 0
         inner_W = 0
         inner_Z = 0
@@ -350,12 +358,11 @@ def run_fix_lqr_robot(T, A, B, Q, R, noise, mode, P, D, H, F):
             _optimal_G += np.matmul(np.transpose(F[s - t]), np.matmul(P, w[s]))
 
         # Online algorithm (time-varying lambda)
-        # _FTL_lam = _find_lam(t, w, estimated_w, P, F, H)
-        # if _FTL_lam != _FTL_all_lam[t]:
-        #     abs(_FTL_all_lam[t] - _FTL_lam) / _FTL_lam < 0.01
+
         _online_u = -np.matmul(D, _online_E) - _FTL_all_lam[t] * np.matmul(D, _myopic_G)
 
         # Omniscient algorithm
+
         _optimal_u = -np.matmul(D, _optimal_E) - np.matmul(D, _optimal_G)
 
         # Update states
@@ -372,9 +379,6 @@ def run_fix_lqr_robot(T, A, B, Q, R, noise, mode, P, D, H, F):
                 np.transpose(_online_u), np.matmul(R, _online_u))
             OPT += np.matmul(np.transpose(_optimal_x[t]), np.matmul(Q, _optimal_x[t])) + np.matmul(
                 np.transpose(_optimal_u), np.matmul(R, _optimal_u))
-
-            # myopic_ALG += (x[t][0] ** 2) + (x[t][1] ** 2) + 0.01*(u[0] ** 2) + 0.01*(u[1] ** 2)
-            # OPT += (_optimal_x[t][0] ** 2) + (_optimal_x[t][1] ** 2) + 0.01*(_optimal_u[0] ** 2) +  0.01* (_optimal_u[1] ** 2)
         else:
             online_ALG += np.matmul(np.transpose(_online_x[t]), np.matmul(P, _online_x[t]))
             OPT += np.matmul(np.transpose(_optimal_x[t]), np.matmul(P, _optimal_x[t]))

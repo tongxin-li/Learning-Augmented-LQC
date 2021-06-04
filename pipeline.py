@@ -5,7 +5,7 @@ import numpy as np
 
 # Initialize
 
-mode = 'EV'
+mode = 'Tracking' # Application: 'Tracking' or 'EV'
 
 A, B, Q, R, T, N, M, J, sigma, lam, mu = generate_parameters(mode)
 P, _, _ = control.dare(A, B, Q, R)
@@ -66,6 +66,7 @@ plt.ylabel("Competitive Ratios")
 plt.grid()
 plt.show()
 
+# Save data
 # np.save("cp.npy", competitive_ratio)
 # np.save("ocp.npy", online_competitive_ratio)
 # np.save("e.npy", epsilon)
