@@ -55,13 +55,24 @@ def compute_upper_bound(A, B, Q, R, OPT, lam, epsilon, X, Y, W, Z):
     return min(bound_1, bound_2)
 
 
-def generate_noise(mu, sigma, T, A):
+def generate_noise(mu, sigma, T, A, type):
     noise = np.zeros((T, np.shape(A)[0]))
 
     for t in range(T):
 
-        noise[t] = np.random.normal(mu, sigma, np.shape(A)[0])
-        # noise[t] = sigma * np.random.binomial(10, 0.5, np.shape(A)[0])
+        if type == 'Gaussian':
+
+            noise[t] = np.random.normal(mu, sigma, np.shape(A)[0])
+
+        elif type == 'Binomial':
+
+            noise[t] = sigma * np.random.binomial(10, 0.5, np.shape(A)[0])
+        else:
+            try:
+                print(type)
+                print('Noise type is not supported!')
+            except:
+                print("A type error occured")
 
     return noise
 
@@ -81,7 +92,7 @@ def generate_w(mode, A, T):
 
     if mode == 'EV':
 
-        energy = np.load('data/energy.npy')
+        # energy = np.load('data/energy.npy')
 
         for t in range(T):
             # p = 0.5
@@ -91,7 +102,7 @@ def generate_w(mode, A, T):
                 if t % 5:
                         # arrival every 5 steps
                         # w[t][i] = random.choice(energy)
-                        w[t][i] = np.mean(energy)
+                        w[t][i] = 5
                 else:
                     w[t][i] = 0
 
@@ -100,7 +111,7 @@ def generate_w(mode, A, T):
 
 # Determining lambda
 
-def _find_lam(t, w, estimated_w, P, F, H):
+def _find_lam(t, w, estimated_w, P, F, H, ini_lambda):
 
     prediction_perturbation = 0
     prediction_prediction = 0
@@ -119,12 +130,12 @@ def _find_lam(t, w, estimated_w, P, F, H):
     if prediction_prediction != 0:
         lam_optimal = prediction_perturbation / prediction_prediction
     else:
-        lam_optimal = 0.3
+        lam_optimal = ini_lambda
 
     return lam_optimal
 
 
-def _find_all_lam(T, w, estimated_w, P, F, H, size):
+def _find_all_lam(T, w, estimated_w, P, F, H, size, ini_lambda):
 
     all_lam_optimal = []
     matrix_w = np.zeros((T, T, size))
@@ -142,11 +153,13 @@ def _find_all_lam(T, w, estimated_w, P, F, H, size):
             prediction_perturbation += np.matmul(np.transpose(matrix_w[s, t]), np.matmul(H, matrix_est_w[s, t]))
         if prediction_prediction != 0:
             lam_optimal = prediction_perturbation / prediction_prediction
+        else:
+            lam_optimal = ini_lambda
         all_lam_optimal.append(lam_optimal)
     return all_lam_optimal
 
 
-def run_robot(T, A, B, Q, R, noise, lam, mode):
+def run_robot(T, A, B, Q, R, noise, lam, mode, ini_lambda):
 
     # Initialize
 
@@ -212,7 +225,7 @@ def run_robot(T, A, B, Q, R, noise, lam, mode):
 
         # Online algorithm (time-varying lambda)
 
-        _FTL_lam = _find_lam(t, w, estimated_w, P, F, H)
+        _FTL_lam = _find_lam(t, w, estimated_w, P, F, H, ini_lambda)
         _online_u = -np.matmul(D, _online_E) - _FTL_lam * np.matmul(D, _myopic_G)
 
         # Omniscient algorithm
@@ -301,7 +314,7 @@ def run_lqr_robot(T, A, B, Q, R, noise, lam, mode, P, D, H, F):
     return myopic_ALG
 
 
-def run_fix_lqr_robot(T, A, B, Q, R, noise, mode, P, D, H, F):
+def run_fix_lqr_robot(T, A, B, Q, R, noise, mode, P, D, H, F, ini_lambda):
 
     # Initialize
 
@@ -341,8 +354,8 @@ def run_fix_lqr_robot(T, A, B, Q, R, noise, mode, P, D, H, F):
         Y += inner_epsilon * inner_Z
         X += inner_Z * inner_W
 
-    # _FTL_all_lam = _find_all_lam(T, w, estimated_w, P, F, H, np.shape(A)[0])
-    _FTL_all_lam = [0 for t in range(T)]
+    _FTL_all_lam = _find_all_lam(T, w, estimated_w, P, F, H, np.shape(A)[0], ini_lambda)
+    # _FTL_all_lam = [0 for t in range(T)]
 
     for t in range(T):
 
