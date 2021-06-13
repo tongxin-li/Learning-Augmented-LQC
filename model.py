@@ -2,13 +2,14 @@ import numpy as np
 import math
 import control
 import random
+from plots import *
 
 # Define trackings
 
 def tracking_coordinates(t):
 
-    y_1 = 2 * math.cos(t) + math.cos(5 * t)
-    y_2 = 2 * math.sin(t) + math.sin(5 * t)
+    y_1 = 2 * math.cos(t/38.2) + math.cos(5 * t/38.2)
+    y_2 = 2 * math.sin(t/38.2) + math.sin(5 * t/38.2)
 
     return y_1, y_2
 
@@ -62,7 +63,7 @@ def generate_noise(mu, sigma, T, A, type):
 
         if type == 'Gaussian':
 
-            noise[t] = np.random.normal(mu, sigma, np.shape(A)[0])
+            noise[t] = np.random.normal(mu, 0.005, np.shape(A)[0])
 
         elif type == 'Binomial':
 
@@ -106,6 +107,19 @@ def generate_w(mode, A, T):
                 else:
                     w[t][i] = 0
 
+    if mode == 'Extreme':
+
+        for t in range(T):
+            # p = 0.5
+            for i in range(np.shape(A)[0]):
+                # coin = np.random.binomial(1, p, 1) # arriving rate 0.1
+                # if coin > 0:
+                if t % 5:
+                        # arrival every 5 steps
+                        # w[t][i] = random.choice(energy)
+                        w[t][i] = 5
+                else:
+                    w[t][i] = 0
     return w
 
 
@@ -141,7 +155,6 @@ def _find_all_lam(T, w, estimated_w, P, F, H, size, ini_lambda):
     matrix_w = np.zeros((T, T, size))
     matrix_est_w = np.zeros((T, T, size))
     for t in range(T):
-        lam_optimal = 0
         prediction_prediction = 0
         prediction_perturbation = 0
         matrix_w[t, t] = np.matmul(P, w[t])
@@ -314,7 +327,7 @@ def run_lqr_robot(T, A, B, Q, R, noise, lam, mode, P, D, H, F):
     return myopic_ALG
 
 
-def run_fix_lqr_robot(T, A, B, Q, R, noise, mode, P, D, H, F, ini_lambda):
+def run_fix_lqr_robot(T, A, B, Q, R, noise, mode, P, D, H, F, ini_lambda, plot_curve):
 
     # Initialize
 
@@ -372,6 +385,8 @@ def run_fix_lqr_robot(T, A, B, Q, R, noise, mode, P, D, H, F, ini_lambda):
 
         # Online algorithm (time-varying lambda)
 
+        if _FTL_all_lam[t] < 0 or _FTL_all_lam[t] > 1:
+            _FTL_all_lam[t] = np.abs(_FTL_all_lam[t])
         _online_u = -np.matmul(D, _online_E) - _FTL_all_lam[t] * np.matmul(D, _myopic_G)
 
         # Omniscient algorithm
@@ -395,6 +410,29 @@ def run_fix_lqr_robot(T, A, B, Q, R, noise, mode, P, D, H, F, ini_lambda):
         else:
             online_ALG += np.matmul(np.transpose(_online_x[t]), np.matmul(P, _online_x[t]))
             OPT += np.matmul(np.transpose(_optimal_x[t]), np.matmul(P, _optimal_x[t]))
+
+
+    if plot_curve is True:
+
+        y = np.zeros((T, 2))
+
+        for t in range(T):
+            y_1, y_2 = tracking_coordinates(t)
+            y[t] = [y_1, y_2]
+
+        # plot_track(_myopic_x,y,r'$\lambda$=1','red')
+        plot_track(_online_x[:60],y[:60],r'$t\in [0,60]$','blue')
+        plot_track(_online_x[60:120],y[60:120],r'$t\in (60,90]$','green')
+        plot_track(_online_x[120:180],y[120:180],r'$t\in [90,150]$','magenta')
+        plot_track(_online_x[180:240],y[180:240],r'$t\in [150,210]$','gray')
+        # plot_track(_optimal_x,y,'Offline-Optimal','green')
+        plot_trajectory(y[0:240],'black')
+        plt.grid()
+        plt.show()
+
+        plt.figure()
+        plot_lambda(_FTL_all_lam)
+        plt.show()
 
     print("Online Cost is")
     print(online_ALG)

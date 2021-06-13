@@ -10,24 +10,26 @@ def get_configs():
     parser = argparse.ArgumentParser(
         description='Self-tuning Linear Quadratic Controller')
 
-    parser.add_argument('--mode', default='EV', type=str,
+    parser.add_argument('--mode', default='Tracking', type=str,
                         help='Tracking or EV')
     parser.add_argument('--noise', default='Gaussian', type=str,
                         help='Noise type, Gaussian or Binomial')
     parser.add_argument('--ini_lambda', default=0.3, type=float,
                         help='initial trust parameter lambda, in [0,1]')
     parser.add_argument('--save_output', default=False,
-                        type=str, help='Save output or not')
+                        type=bool, help='Save output or not')
     parser.add_argument('--plot_output', default=True,
-                        type=str, help='Plot output or not')
+                        type=bool, help='Plot output or not')
+    parser.add_argument('--plot_curve', default=True,
+                        type=bool, help='Plot tracking curve or not; only for mode = "Tracking" ')
     parser.add_argument('--J', default=6,
-                        type=str, help='Number of trust parameters')
-    parser.add_argument('--T', default=100,
-                        type=str, help='Number of time slots')
+                        type=int, help='Number of trust parameters')
+    parser.add_argument('--T', default=240,
+                        type=int, help='Number of time slots')
     parser.add_argument('--N', default=20,
-                        type=str, help='Number of error divisions')
+                        type=int, help='Number of error divisions')
     parser.add_argument('--M', default=5,
-                        type=str, help='Number of Monte Carlo tests')
+                        type=int, help='Number of Monte Carlo tests')
 
 
     configs = parser.parse_args()
@@ -71,7 +73,7 @@ def main():
 
             # Run self-tuning control
             _epsilon, X, Y, W, Z, _online_ALG, _OPT = run_fix_lqr_robot(T, A, B, Q, R, noise, mode, P,
-                                                                                 D, H, F_list, configs.ini_lambda)
+                                                                                 D, H, F_list, configs.ini_lambda, configs.plot_curve)
             if _OPT != 0 and _online_ALG / _OPT > online_competitive_ratio[i]:
                 online_competitive_ratio[i] = _online_ALG / _OPT
                 online_epsilon[i] = _epsilon
