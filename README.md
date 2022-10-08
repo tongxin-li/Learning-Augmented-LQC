@@ -1,6 +1,8 @@
 ## Self-tuning linear quadratic controller
 
-Original implementation for NeurIPS 2021 paper submissiom
+Implementation for SIGMETRICS 2022 paper: Robustness and consistency in linear quadratic control with untrusted predictions
+
+Newest arXiv version: https://arxiv.org/abs/2106.09659
 
 ## Dependencies
 * python3 v3.6.8
